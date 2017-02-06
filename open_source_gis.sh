@@ -48,7 +48,7 @@
 
 
 ### Create working directory
-DIR=/home/domisch/gis_intro
+DIR=$HOME/gis_intro
 rm -rf $DIR
 mkdir -p $DIR
 cd $DIR
@@ -289,9 +289,6 @@ x11(20,10); plot(dem_crop); plot(basin_subset, add=T)
 
 
 
-
-
-
 ### Get the maximum elevation in each watershed
 
 ### Run extraction on (a subset of the) shapefile
@@ -305,7 +302,6 @@ head(basin_subset_elevation)
 
 ### Export the shapefile
 writePolyShape(basin_subset_elevation, "basin_subset_elevation.shp")
-
 
 
 
@@ -324,10 +320,8 @@ dem_max <- zonal(dem_crop, basin_r_crop, "max", na.rm=TRUE)
 head(dem_max)
 
 ### Reclassify the basin -raster
-names(dem_max) <- c("is", "becomes") 
+names(dem_max) <- c("is", "becomes") # change headers, see ?reclassify
 head(dem_max)
-
-# Useually you would use:
 basin_maxElev <- reclassify(basin_r_crop, dem_max)
 
 x11(); plot(basin_maxElev)
