@@ -136,6 +136,7 @@ r.info elevation # check data
 ### Open GUI and visualize the layers
 g.gui wxpython
 
+### Run a hydrologic conditioning on the DEM, removing sinks and peaks
 # g.extension  extension=r.hydrodem # download extension
 r.hydrodem  input=elevation  output=elevation_cond  --overwrite
 
@@ -165,6 +166,7 @@ gdalinfo $DIR/basin_al.tif | grep Size
 gdalinfo $DIR/basin.tif | grep Size
 
 ### pktools
+# http://pktools.nongnu.org/html/index.html
 ### Crop global distance layer to same extent as basins (central Europe)
 # pkcrop  -i $DIR/distance.tif   -o $DIR/distance_crop1.tif  -align  -ulx 2  -uly 60  -lrx 20  -lry  35
 pkinfo -i $DIR/basin_al.tif -bb -dx -dy
@@ -174,12 +176,10 @@ openev $DIR/distance_mask.tif &
 
 
 # Merge two raster layers
-# http://pktools.nongnu.org/html/index.html
 pkcrop  -i $DIR/distance.tif   -o $DIR/distance_crop1.tif  -align  -ulx 2  -uly 60  -lrx 20  -lry  35
 pkcrop  -i $DIR/distance.tif  -o $DIR/distance_crop2.tif  -align  -ulx 15  -uly 40  -lrx 35  -lry  20
 pkcomposite   -i $DIR/distance_crop1.tif   -i $DIR/distance_crop2.tif   -o $DIR/distance_merge.tif
 openev $DIR/distance_crop1.tif    $DIR/distance_crop2.tif   $DIR/distance_merge.tif   &
-
 
 
 ### Create a polygon from the basin raster layer
@@ -189,9 +189,7 @@ ogrinfo   $DIR/basin.shp   -al -so
 openev $DIR/basin.shp  &
 
 
-
 ###==================================================================================
-
 
 ### Open Foris Geospatial Toolkit
 # http://www.openforis.org/OFwiki/index.php/Tools_%26_Exercises
@@ -214,14 +212,12 @@ ogrinfo   $DIR/basin.shp   -al -so
 openev $DIR/basin.shp  &
 
 
-
 ###==================================================================================
 
-
 ### R
-### - load elevation raster and basin polygon data
+### - load raster and polygon data
 ### - set projection
-### - crop layers to smaller extent
+### - subset / crop layers to smaller extent
 ### - extract maximum elevation for each watershed
 
 R --vanilla 
@@ -245,7 +241,6 @@ world
 proj4string(world) <- "+proj=longlat +ellps=WGS84"
 x11(); plot(world)
 
-
 ### Load the elevation data and basin-polygons
 dem <- raster("dem/alt_16.tif")
 dem
@@ -253,21 +248,17 @@ dem
 basin <- readShapePoly("basin.shp")
 basin
 
-
 ### Define projection for the basins
 proj4string(basin) <- proj4string(dem)
-
 
 ### Dissolve global shapefile
 world_dissolve <-  gUnaryUnion(world)
 x11(20,10); plot(world_dissolve)
 
-
 ### Subset global shapefile by country
 head(world)
 world_sub <- subset(world, NAME== "Austria")
 x11(); plot(world_sub)
-
 
 ### Which basins overlap with the selection?
 basin_subset <- raster::intersect(world_sub, basin)
@@ -278,7 +269,6 @@ head(basin_subset) # both shapefiles are merged
 dem_crop <- crop(dem, extent(basin_subset))
 x11(20,10); plot(dem_crop); plot(basin_subset, add=T)
 
-
 ### Alternatives to cropping the shapefiles to a smaller extent
 # basin_subset <- subset(basin, avg > 700) 		# subset by distance to sea
 
@@ -288,14 +278,12 @@ x11(20,10); plot(dem_crop); plot(basin_subset, add=T)
 # x11(); plot(dem); plot(basin_subset, add=T)
 
 
-
 ### Get the maximum elevation in each watershed
 
 ### Run extraction on (a subset of the) shapefile
 beginCluster(8)
 basin_subset_elevation <- extract(dem_crop, basin_subset, fun=max, sp=T) # only for a subset...
 endCluster()
-
 
 ### Check data
 head(basin_subset_elevation)
@@ -304,18 +292,16 @@ head(basin_subset_elevation)
 writePolyShape(basin_subset_elevation, "basin_subset_elevation.shp")
 
 
-
 ### Run same analysis on raster layers
 basin_r <- raster("basin.tif")
 basin_r_crop <- crop(basin_r, dem_crop)
 
-# Plot
+### Plot
 x11(40,15); par(mfrow=c(1, 2))
 plot(dem_crop); plot(basin_subset_elevation, add=T)
 plot(basin_r_crop); plot(basin_subset_elevation, add=T)
 
-
-# Get maximum elevation within each watershed
+### Get maximum elevation within each watershed
 dem_max <- zonal(dem_crop, basin_r_crop, "max", na.rm=TRUE)
 head(dem_max)
 
@@ -327,16 +313,12 @@ basin_maxElev <- reclassify(basin_r_crop, dem_max)
 x11(); plot(basin_maxElev)
 plot(basin_subset_elevation, add=T)
 
-
-# # Run using the cluster-function:
+# ### Run using the cluster-function:
 # beginCluster(4)
 # myfun <- function(x) reclassify(x, dem_max)
 # basin_maxElev <- clusterR(basin_r_crop, myfun, export="dem_max")
 # endCluster()
 
-
 ### Export the raster
 writeRaster(basin_maxElev, "elevation_max.tif", overwrite=T)
-
 # graphics.off()
-
