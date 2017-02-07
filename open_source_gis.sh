@@ -306,6 +306,7 @@ dem_max <- zonal(dem_crop, basin_r_crop, "max", na.rm=TRUE)
 head(dem_max)
 
 ### Reclassify the basin -raster
+dem_max <- as.data.frame(dem_max)
 names(dem_max) <- c("is", "becomes") # change headers, see ?reclassify
 head(dem_max)
 basin_maxElev <- reclassify(basin_r_crop, dem_max)
