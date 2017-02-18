@@ -75,9 +75,9 @@ http://www.learnshell.org/
 
 
 ### Create working directory
-DIR=$HOME/gis_intro
-rm -rf $DIR
-mkdir -p $DIR
+DIR=$HOME/gis_intro # assign a variable
+rm -rf $DIR 		# remove previous data
+mkdir -p $DIR 		# create the folder
 cd $DIR
 
 ### Download global world borders shapefile
