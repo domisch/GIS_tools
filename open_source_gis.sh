@@ -46,6 +46,33 @@
 
 
 
+### Basic bash commands
+pwd 					# print working directory
+echo HOME   			# print text string in the console 
+echo $HOME 				# print the variable that is assigned to the string
+cd $HOME 				# enter your home directory
+ll 						# or "ls -hl", displays items in folder
+top						# check ongoing processes, quit with "q"
+seq 1 10 				# print numbers 1 to 10
+seq 1 10 > test.txt  	# print numbers 1 to 10 and write into a .txt file
+echo 11 >> test.txt 	# append to the same .txt file
+head test.txt   		# show first 10 lines
+cat test.txt  			# show the entire file
+rm test.txt   			# remove the file
+# [ctrl + c]  			# stop running process
+
+# Basic for loop
+for i in $(seq 1 15); do
+echo Printing number $i
+done
+
+### Use this interactive shell to learn more
+http://www.learnshell.org/
+
+
+# ###============================================================================
+
+
 
 ### Create working directory
 DIR=$HOME/gis_intro
@@ -306,7 +333,7 @@ dem_max <- zonal(dem_crop, basin_r_crop, "max", na.rm=TRUE)
 head(dem_max)
 
 ### Reclassify the basin -raster
-dem_max <- as.data.frame(dem_max)
+dem_max <- as.data.frame(dem_max) 	 # convert matrix to dataframe 
 names(dem_max) <- c("is", "becomes") # change headers, see ?reclassify
 head(dem_max)
 basin_maxElev <- reclassify(basin_r_crop, dem_max)
