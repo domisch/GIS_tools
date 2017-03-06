@@ -159,7 +159,7 @@ grass72  -text -c -e  $DIR/dem/alt_16.tif  $DIR/grass_location
 grass72 -text $DIR/grass_location/PERMANENT  # enter GRASS
 
 ### Read data into GRASS
-r.in.gdal input=$DIR/dem/alt_16.tif    output=elevation --overwrite
+r.in.gdal input=$DIR/dem/alt_16.tif    output=elevation   --overwrite
 r.info elevation # check data
 
 ### Open GUI and visualize the layers
