@@ -60,7 +60,8 @@ head test.txt   		# show first 10 lines
 cat test.txt  			# show the entire file
 cp test.txt  test2.txt 	# copy file
 mv test2.txt test3.txt 	# rename file
-rm test*.txt   			# remove files (careful with wildcards!)
+rm test.txt   			# remove file
+rm test*				# remove files based on pattern (careful with wildcards!)
 # [ctrl + c]  			# stop running process
 
 # Basic for loop
