@@ -1,6 +1,6 @@
 
 
-### Examples of open source GIS tools using the command line - Sami Domisch, Feb17
+### Examples of open source GIS tools using the command line - Sami Domisch, May17
 
 
 # ###============================================================================
@@ -111,7 +111,7 @@ gdal_rasterize  $DIR/world/TM_WORLD_BORDERS-0.3.shp   -l TM_WORLD_BORDERS-0.3  $
 openev   $DIR/world/TM_WORLD_BORDERS-0.3.shp     $DIR/world/world.tif  &
 # e.g to 0.0083 degree, aka 1km --> check file size
 gdal_rasterize  $DIR/world/TM_WORLD_BORDERS-0.3.shp   -l TM_WORLD_BORDERS-0.3  $DIR/world/world.tif   -a_srs EPSG:4326   -a_nodata  -9999  -tr 0.0083  0.0083  -a UN 
-ll
+ll world
 ### See the different data types for storing 
 ### https://grass.osgeo.org/grass72/manuals/r.out.gdal.html
 
@@ -259,27 +259,28 @@ library(sp)
 library(rgdal)
 library(maptools)
 library(rgeos)
+library(snow)
 
 
 DIR="/home/domisch/gis_intro"
 setwd(DIR)
 
 ### Read global shapefile and set projection
-world <- readShapePoly("world/TM_WORLD_BORDERS-0.3.shp")
+world <- shapefile("world/TM_WORLD_BORDERS-0.3.shp")
 world
 ### See also www.spatialreference.org
-proj4string(world) <- "+proj=longlat +ellps=WGS84"
+# proj4string(world) <- "+proj=longlat +ellps=WGS84"
 x11(); plot(world)
 
 ### Load the elevation data and basin-polygons
 dem <- raster("dem/alt_16.tif")
 dem
 
-basin <- readShapePoly("basin.shp")
+basin <- shapefile("basin.shp")
 basin
 
 ### Define projection for the basins
-proj4string(basin) <- proj4string(dem)
+# proj4string(basin) <- proj4string(dem)
 
 ### Dissolve global shapefile
 world_dissolve <-  gUnaryUnion(world)
@@ -319,7 +320,7 @@ endCluster()
 head(basin_subset_elevation)
 
 ### Export the shapefile
-writePolyShape(basin_subset_elevation, "basin_subset_elevation.shp")
+shapefile(basin_subset_elevation, "basin_subset_elevation.shp")
 
 
 ### Run same analysis on raster layers
