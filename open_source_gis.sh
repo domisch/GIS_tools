@@ -111,7 +111,7 @@ gdal_rasterize  $DIR/world/TM_WORLD_BORDERS-0.3.shp   -l TM_WORLD_BORDERS-0.3  $
 openev   $DIR/world/TM_WORLD_BORDERS-0.3.shp     $DIR/world/world.tif  &
 # e.g to 0.0083 degree, aka 1km --> check file size
 gdal_rasterize  $DIR/world/TM_WORLD_BORDERS-0.3.shp   -l TM_WORLD_BORDERS-0.3  $DIR/world/world.tif   -a_srs EPSG:4326   -a_nodata  -9999  -tr 0.0083  0.0083  -a UN 
-
+ll
 ### See the different data types for storing 
 ### https://grass.osgeo.org/grass72/manuals/r.out.gdal.html
 
