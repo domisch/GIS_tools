@@ -24,7 +24,7 @@
 # sudo apt-get install gcc g++ gdal-bin libgdal1-dev libgsl0-dev libgsl0ldbl libproj-dev python-gdal python-scipy python-tk python-qt4 perl
 # wget wget http://foris.fao.org/static/geospatialtoolkit/releases/OpenForisToolkit.run
 # sudo chmod u+x OpenForisToolkit.run
-# sudo ./OpenForisToolkit.Run
+# sudo ./OpenForisToolkit.run
 
 # ### FW tools
 # wget "http://fwtools.loskot.net/FWTools-linux-2.0.6.tar.gz"
