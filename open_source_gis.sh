@@ -156,8 +156,8 @@ unzip  -o $DIR/alt_16_tif.zip  -d  $DIR/dem
 gdalinfo $DIR/dem/alt_16.tif        # check data
 
 ### Create the GRASS GIS data base and enter GRASS:
-grass72  -text -c -e  $DIR/dem/alt_16.tif  $DIR/grass_location
-grass72 -text $DIR/grass_location/PERMANENT  # enter GRASS
+grass74  -text -c -e  $DIR/dem/alt_16.tif  $DIR/grass_location
+grass74 -text $DIR/grass_location/PERMANENT  # enter GRASS
 
 ### Read data into GRASS
 r.in.gdal input=$DIR/dem/alt_16.tif    output=elevation   --overwrite
