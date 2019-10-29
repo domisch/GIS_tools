@@ -110,7 +110,7 @@ gdal_rasterize -h
 gdal_rasterize  $DIR/world/TM_WORLD_BORDERS-0.3.shp   -l TM_WORLD_BORDERS-0.3  $DIR/world/world.tif   -a_srs EPSG:4326   -a_nodata  -9999  -tr 0.1  0.1  -a UN 
 openev   $DIR/world/TM_WORLD_BORDERS-0.3.shp     $DIR/world/world.tif  &
 # e.g to 0.0083 degree, aka 1km --> check file size
-gdal_rasterize  $DIR/world/TM_WORLD_BORDERS-0.3.shp   -l TM_WORLD_BORDERS-0.3  $DIR/world/world.tif   -a_srs EPSG:4326   -a_nodata  -9999  -tr 0.0083  0.0083  -a UN 
+gdal_rasterize  $DIR/world/TM_WORLD_BORDERS-0.3.shp   -l TM_WORLD_BORDERS-0.3  $DIR/world/world.tif   -a_srs EPSG:4326   -a_nodata  -9999  -tr 0.008333333333333333  0.008333333333333333  -a UN 
 ll world
 ### See the different data types for storing 
 ### https://grass.osgeo.org/grass72/manuals/r.out.gdal.html
@@ -127,7 +127,7 @@ ll world
 #   Float64, CFloat64	     -1.79E308         1.79E308
 
 # 1km with the correct output type --> check file size
-gdal_rasterize $DIR/world/TM_WORLD_BORDERS-0.3.shp    -l TM_WORLD_BORDERS-0.3  $DIR/world/world.tif   -a_srs EPSG:4326 -ot Byte   -a_nodata  255  -tr 0.0083  0.0083 -a UN  -co COMPRESS=LZW
+gdal_rasterize $DIR/world/TM_WORLD_BORDERS-0.3.shp    -l TM_WORLD_BORDERS-0.3  $DIR/world/world.tif   -a_srs EPSG:4326 -ot Byte   -a_nodata  255  -tr 0.008333333333333333  0.008333333333333333 -a UN  -co COMPRESS=LZW
 gdalinfo  $DIR/world/world.tif  -mm
 
 
@@ -154,6 +154,9 @@ cd $DIR
 wget -O  $DIR/alt_16_tif.zip  "http://biogeo.ucdavis.edu/data/climate/worldclim/1_4/tiles/cur/alt_16_tif.zip"
 unzip  -o $DIR/alt_16_tif.zip  -d  $DIR/dem
 gdalinfo $DIR/dem/alt_16.tif        # check data
+
+
+
 
 ### Create the GRASS GIS data base and enter GRASS:
 grass74  -text -c -e  $DIR/dem/alt_16.tif  $DIR/grass_location
@@ -190,19 +193,22 @@ exit
 ###==================================================================================
 
 
-### Fix NoData and alignment issue in Worldclim data (here: the basin.tif layer originating from the DEM)
-# gdalwarp  -ot Int32  -dstnodata -9999  -te 0 30 30 60  -tap   -tr  0.00833333333333  0.00833333333333  $DIR/basin.tif  $DIR/basin_al.tif 
+### Fix alignment issue:
+# gdalwarp  -ot Int32  -dstnodata -9999  -te 0 30 30 60  -tap   -tr  0.008333333333333333  0.008333333333333333  $DIR/basin.tif  $DIR/basin_al.tif -overwrite
 # gdalinfo $DIR/basin_al.tif | grep Size
 # gdalinfo $DIR/basin.tif | grep Size
+
+
+
 
 ### pktools
 # http://pktools.nongnu.org/html/index.html
 ### Crop global distance layer to same extent as basins (central Europe)
 # pkcrop  -i $DIR/distance.tif   -o $DIR/distance_crop1.tif  -align  -ulx 2  -uly 60  -lrx 20  -lry  35
 pkinfo -i $DIR/basin.tif -bb -dx -dy
-pkcrop -i $DIR/distance.tif  $(pkinfo -i $DIR/basin.tif  -bb -dx -dy)  -o $DIR/distance_mask.tif  -co COMPRESS=LZW -co ZLEVEL=9
+pkcrop -i $DIR/distance.tif  $(pkinfo -i $DIR/basin.tif  -bb)  -o $DIR/distance_mask.tif  -co COMPRESS=LZW -co ZLEVEL=9
 openev $DIR/distance_mask.tif &
-# gdalinfo $DIR/distance_mask.tif 
+gdalinfo $DIR/distance_mask.tif 
 
 
 # Merge two raster layers
@@ -250,7 +256,7 @@ openev $DIR/basin.shp  &
 ### - subset / crop layers to smaller extent
 ### - extract maximum elevation for each watershed
 
-R --vanilla 
+R
 
 ### Load packages and set working directory
 # install.packages("raster")
@@ -270,10 +276,12 @@ world <- shapefile("world/TM_WORLD_BORDERS-0.3.shp")
 world
 ### See also www.spatialreference.org
 # proj4string(world) <- "+proj=longlat +ellps=WGS84"
-x11(); plot(world)
+### Dissolve global shapefile
+world_dissolve <-  gUnaryUnion(world)
+x11(20,10); plot(world_dissolve)
 
 ### Load the elevation data and basin-polygons
-dem <- raster("dem/alt_16.tif")
+dem <- raster("dem_eu.tif")
 dem
 
 basin <- shapefile("basin.shp")
@@ -282,9 +290,7 @@ basin
 ### Define projection for the basins
 # proj4string(basin) <- proj4string(dem)
 
-### Dissolve global shapefile
-world_dissolve <-  gUnaryUnion(world)
-x11(20,10); plot(world_dissolve)
+
 
 ### Subset global shapefile by country
 head(world)
@@ -320,7 +326,7 @@ endCluster()
 head(basin_subset_elevation)
 
 ### Export the shapefile
-shapefile(basin_subset_elevation, "basin_subset_elevation.shp")
+shapefile(basin_subset_elevation, "basin_subset_elevation.shp", overwrite=TRUE)
 
 
 ### Run same analysis on raster layers
@@ -328,9 +334,9 @@ basin_r <- raster("basin.tif")
 basin_r_crop <- crop(basin_r, dem_crop)
 
 ### Plot
-x11(40,15); par(mfrow=c(1, 2))
-plot(dem_crop); plot(basin_subset_elevation, add=T)
-plot(basin_r_crop); plot(basin_subset_elevation, add=T)
+# x11(40,15); par(mfrow=c(1, 2))
+# plot(dem_crop); plot(basin_subset_elevation, add=T)
+# plot(basin_r_crop); plot(basin_subset_elevation, add=T)
 
 ### Get maximum elevation within each watershed
 dem_max <- zonal(dem_crop, basin_r_crop, "max", na.rm=TRUE)
