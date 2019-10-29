@@ -281,7 +281,7 @@ world_dissolve <-  gUnaryUnion(world)
 x11(20,10); plot(world_dissolve)
 
 ### Load the elevation data and basin-polygons
-dem <- raster("dem_eu.tif")
+dem <- raster("dem/alt_16.tif")
 dem
 
 basin <- shapefile("basin.shp")
