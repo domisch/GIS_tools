@@ -191,16 +191,16 @@ exit
 
 
 ### Fix NoData and alignment issue in Worldclim data (here: the basin.tif layer originating from the DEM)
-gdalwarp  -ot Int32  -dstnodata -9999  -te 0 30 30 60  -tap   -tr  0.00833333333333  0.00833333333333  $DIR/basin.tif  $DIR/basin_al.tif 
-gdalinfo $DIR/basin_al.tif | grep Size
-gdalinfo $DIR/basin.tif | grep Size
+# gdalwarp  -ot Int32  -dstnodata -9999  -te 0 30 30 60  -tap   -tr  0.00833333333333  0.00833333333333  $DIR/basin.tif  $DIR/basin_al.tif 
+# gdalinfo $DIR/basin_al.tif | grep Size
+# gdalinfo $DIR/basin.tif | grep Size
 
 ### pktools
 # http://pktools.nongnu.org/html/index.html
 ### Crop global distance layer to same extent as basins (central Europe)
 # pkcrop  -i $DIR/distance.tif   -o $DIR/distance_crop1.tif  -align  -ulx 2  -uly 60  -lrx 20  -lry  35
-pkinfo -i $DIR/basin_al.tif -bb -dx -dy
-pkcrop -i $DIR/distance.tif  $(pkinfo -i $DIR/basin_al.tif  -bb -dx -dy)  -o $DIR/distance_mask.tif  -co COMPRESS=LZW -co ZLEVEL=9
+pkinfo -i $DIR/basin.tif -bb -dx -dy
+pkcrop -i $DIR/distance.tif  $(pkinfo -i $DIR/basin.tif  -bb -dx -dy)  -o $DIR/distance_mask.tif  -co COMPRESS=LZW -co ZLEVEL=9
 openev $DIR/distance_mask.tif &
 # gdalinfo $DIR/distance_mask.tif 
 
@@ -224,7 +224,7 @@ openev $DIR/basin.shp  &
 ### Open Foris Geospatial Toolkit
 # http://www.openforis.org/OFwiki/index.php/Tools_%26_Exercises
 ### Calculate distance statistics for each basin
-oft-stat  -i $DIR/distance_mask.tif  -o $DIR/stats.txt -um  $DIR/basin_al.tif   -mm 
+oft-stat  -i $DIR/distance_mask.tif  -o $DIR/stats.txt -um  $DIR/basin.tif   -mm 
 head $DIR/stats.txt 
 ### Add the header
 # echo basin_id pixel min max avg std > $DIR/stats_new.txt 
