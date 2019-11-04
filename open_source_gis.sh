@@ -153,7 +153,28 @@ cd $DIR
 ### Download and unzip a DEM from WorldClim (http://www.worldclim.org/tiles.php):
 wget -O  $DIR/alt_16_tif.zip  "http://biogeo.ucdavis.edu/data/climate/worldclim/1_4/tiles/cur/alt_16_tif.zip"
 unzip  -o $DIR/alt_16_tif.zip  -d  $DIR/dem
-gdalinfo $DIR/dem/alt_16.tif        # check data
+gdalinfo $DIR/dem/alt_16.tif        # check data, pay attention to NoData values
+
+### Correct the NoData values
+gdal_translate  -of GTiff  -ot  Int32  -a_nodata -9999    $DIR/dem/alt_16.tif   $DIR/dem/alt_16_2.tif
+gdalinfo $DIR/dem/alt_16_2.tif 
+openev  $DIR/dem/alt_16_2.tif
+
+
+wget -O  $DIR/alt_17_tif.zip  "http://biogeo.ucdavis.edu/data/climate/worldclim/1_4/tiles/cur/alt_17_tif.zip"
+unzip  -o $DIR/alt_17_tif.zip  -d  $DIR/dem
+gdalinfo $DIR/dem/alt_17.tif        # check data
+
+
+
+### Merge raster data using gdalbuildvrt
+openev   $DIR/dem/alt_16.tif   $DIR/dem/alt_17.tif
+gdalbuildvrt  $DIR/dem/tmp.vrt  $DIR/dem/alt_16.tif   $DIR/dem/alt_17.tif
+gdal_translate  -of GTiff  -ot  Int32  -a_nodata -9999    $DIR/dem/tmp.vrt   $DIR/dem/merged.vrt  -co COMPRESS=LZW -co ZLEVEL=9
+openev  $DIR/dem/merged.vrt
+
+
+
 
 
 
