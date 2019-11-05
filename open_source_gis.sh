@@ -136,19 +136,9 @@ gdalinfo  $DIR/world/world.tif  -mm
 gdal_proximity.py  $DIR/world/world.tif   -values 255   $DIR/distance.tif  -co COMPRESS=LZW
 openev   $DIR/distance.tif  &
 
-###==================================================================================
 
 
-### GRASS
-### - download 1km elevation data for central Europe
-### - run hydrological conditioning of the DEM
-### - extract stream network and watersheds
-
-### Create and enter the folder where the data will be stored
-export DIR=/home/domisch/gis_intro
-mkdir $DIR  # create new folder
-cd $DIR
-
+### Merge raster data
 
 ### Download and unzip a DEM from WorldClim (http://www.worldclim.org/tiles.php):
 wget -O  $DIR/alt_16_tif.zip  "http://biogeo.ucdavis.edu/data/climate/worldclim/1_4/tiles/cur/alt_16_tif.zip"
@@ -175,6 +165,16 @@ openev  $DIR/dem/merged.vrt
 
 
 
+
+
+
+###==================================================================================
+
+
+### GRASS
+### - download 1km elevation data for central Europe
+### - run hydrological conditioning of the DEM
+### - extract stream network and watersheds
 
 
 
