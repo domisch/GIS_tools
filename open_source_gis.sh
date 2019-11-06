@@ -78,7 +78,7 @@ http://www.learnshell.org/
 
 
 ### Create working directory
-DIR=$HOME/gis_intro # assign a variable
+export DIR=$HOME/gis_intro # assign a variable
 rm -rf $DIR 		# remove previous data
 mkdir -p $DIR 		# create the folder
 cd $DIR
@@ -200,7 +200,7 @@ r.watershed  elevation=elevation_cond  drainage=drainage   stream=stream  accumu
 
 ### Get drainage basins (last downstream segment: -l flag)
 # g.extension  extension=r.stream.basins
-r.stream.basins  direction=drainage  stream_rast=stream  basins=basins   --o  #-l
+r.stream.basins  direction=drainage  stream_rast=stream  basins=basins   --o  # -l
 
 ### Categorize the single basins:
 r.clump -d input=basins  output=basins_cat  --o
