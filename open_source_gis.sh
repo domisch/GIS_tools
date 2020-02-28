@@ -101,6 +101,7 @@ unzip -j   world.zip  -d  $DIR/world
 openev $DIR/world/TM_WORLD_BORDERS-0.3.shp &
 ### Check metadata
 ogrinfo $DIR/world/TM_WORLD_BORDERS-0.3.shp  -al -so
+ogrinfo $DIR/world/TM_WORLD_BORDERS-0.3.shp  -al -so | grep "Feature count"
 
 ### Rasterize the shapefile- test different spatial grains and file sizes
 # man gdal_rasterize
