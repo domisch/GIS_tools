@@ -114,7 +114,7 @@ openev   $DIR/world/TM_WORLD_BORDERS-0.3.shp     $DIR/world/world.tif  &
 gdal_rasterize  $DIR/world/TM_WORLD_BORDERS-0.3.shp   -l TM_WORLD_BORDERS-0.3  $DIR/world/world.tif   -a_srs EPSG:4326   -a_nodata  -9999  -tr 0.008333333333333333  0.008333333333333333  -a UN 
 ll world
 ### See the different data types for storing 
-### https://grass.osgeo.org/grass72/manuals/r.out.gdal.html
+### https://grass.osgeo.org/grass78/manuals/r.out.gdal.html
 
 # Ranges of GDAL data types
 #   GDAL data type	      	   minimum  		maximum
@@ -181,8 +181,8 @@ openev  $DIR/dem/merged.vrt
 
 
 ### Create the GRASS GIS data base and enter GRASS:
-grass74  -text -c -e  $DIR/dem/alt_16.tif  $DIR/grass_location
-grass74 -text $DIR/grass_location/PERMANENT  # enter GRASS
+grass78  -text -c -e  $DIR/dem/alt_16.tif  $DIR/grass_location
+grass78 -text $DIR/grass_location/PERMANENT  # enter GRASS
 
 ### Read data into GRASS
 r.in.gdal input=$DIR/dem/alt_16.tif    output=elevation   --overwrite
