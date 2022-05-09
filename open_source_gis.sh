@@ -193,7 +193,7 @@ g.gui wxpython
 
 ### Run a hydrologic conditioning on the DEM, removing sinks and peaks
 # g.extension  extension=r.hydrodem # download extension
-r.hydrodem  input=elevation  output=elevation_cond  --overwrite
+# r.hydrodem  input=elevation  output=elevation_cond  --overwrite
 
 ### Extract drainage direction and stream network
 # r.watershed  --h  # see help regarding the options and flags
@@ -204,8 +204,8 @@ r.watershed  elevation=elevation_cond  drainage=drainage   stream=stream  accumu
 r.stream.basins  direction=drainage  stream_rast=stream  basins=basins   --o  # -l
 
 ### Categorize the single basins:
-r.clump -d input=basins  output=basins_cat  --o
-r.info basins_cat
+# r.clump -d input=basins  output=basins_cat  --o
+# r.info basins_cat
 
 ### Write files to disk:
 r.out.gdal  input=stream   output=$DIR/stream.tif  type=Int32  nodata=-9999  --o  -c  -m    createopt="COMPRESS=LZW,ZLEVEL=9"
