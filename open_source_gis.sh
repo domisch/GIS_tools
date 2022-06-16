@@ -101,7 +101,7 @@ unzip -j   world.zip  -d  $DIR/world
 openev $DIR/world/TM_WORLD_BORDERS-0.3.shp &
 ### Check metadata
 ogrinfo $DIR/world/TM_WORLD_BORDERS-0.3.shp  -al -so
-ogrinfo $DIR/world/TM_WORLD_BORDERS-0.3.shp  -al -so | grep "Feature count"
+ogrinfo $DIR/world/TM_WORLD_BORDERS-0.3.shp  -al -so | grep "Feature Count" 
 
 ### Rasterize the shapefile- test different spatial grains and file sizes
 # man gdal_rasterize
@@ -149,7 +149,7 @@ gdalinfo $DIR/dem/alt_16.tif        # check data, pay attention to NoData values
 ### Correct the NoData values
 gdal_translate  -of GTiff  -ot  Int32  -a_nodata -9999    $DIR/dem/alt_16.tif   $DIR/dem/alt_16_2.tif
 gdalinfo $DIR/dem/alt_16_2.tif 
-openev  $DIR/dem/alt_16_2.tif
+openev  $DIR/dem/alt_16_2.tif &
 
 
 wget -O  $DIR/alt_17_tif.zip  "http://biogeo.ucdavis.edu/data/climate/worldclim/1_4/tiles/cur/alt_17_tif.zip"
@@ -159,10 +159,10 @@ gdalinfo $DIR/dem/alt_17.tif        # check data
 
 
 ### Merge raster data using gdalbuildvrt
-openev   $DIR/dem/alt_16.tif   $DIR/dem/alt_17.tif
+openev   $DIR/dem/alt_16.tif   $DIR/dem/alt_17.tif &
 gdalbuildvrt  $DIR/dem/tmp.vrt  $DIR/dem/alt_16.tif   $DIR/dem/alt_17.tif
-gdal_translate  -of GTiff  -ot  Int32  -a_nodata -9999    $DIR/dem/tmp.vrt   $DIR/dem/merged.vrt  -co COMPRESS=LZW -co ZLEVEL=9
-openev  $DIR/dem/merged.vrt
+gdal_translate  -of GTiff  -ot  Int32  -a_nodata -9999    $DIR/dem/tmp.vrt   $DIR/dem/merged.tif  -co COMPRESS=LZW -co ZLEVEL=9
+openev  $DIR/dem/merged.tif &
 
 
 
@@ -197,7 +197,8 @@ g.gui wxpython
 
 ### Extract drainage direction and stream network
 # r.watershed  --h  # see help regarding the options and flags
-r.watershed  elevation=elevation_cond  drainage=drainage   stream=stream  accumulation=accumulation  threshold=100  --o
+# r.watershed  elevation=elevation_cond  drainage=drainage   stream=stream  accumulation=accumulation  threshold=100  --o
+r.watershed  elevation=elevation  drainage=drainage   stream=stream  accumulation=accumulation  threshold=10  --o
 
 ### Get drainage basins (last downstream segment: -l flag)
 # g.extension  extension=r.stream.basins
@@ -209,9 +210,14 @@ r.stream.basins  direction=drainage  stream_rast=stream  basins=basins   --o  # 
 
 ### Write files to disk:
 r.out.gdal  input=stream   output=$DIR/stream.tif  type=Int32  nodata=-9999  --o  -c  -m    createopt="COMPRESS=LZW,ZLEVEL=9"
-r.out.gdal  input=basins_cat   output=$DIR/basin.tif  type=Int32  nodata=-9999  --o  -c  -m  createopt="COMPRESS=LZW,ZLEVEL=9"
+r.out.gdal  input=basins   output=$DIR/basin.tif  type=Int32  nodata=-9999  --o  -c  -m  createopt="COMPRESS=LZW,ZLEVEL=9"
+
+
+### Calculate the average elevation (and other statistics) for each sub-catchment
+r.univar -t  map=elevation  zones=basins  output=$DIR/basins_elevation.txt  separator=tab
 
 exit
+
 ###==================================================================================
 
 
@@ -255,9 +261,9 @@ openev $DIR/basin.shp  &
 oft-stat  -i $DIR/distance_mask.tif  -o $DIR/stats.txt -um  $DIR/basin.tif   -mm 
 head $DIR/stats.txt 
 ### Add the header
-# echo basin_id pixel min max avg std > $DIR/stats_new.txt 
-# cat $DIR/stats.txt  >> $DIR/stats_new.txt 
-# cat $DIR/stats_new.txt | head -20  
+echo basin_id pixel min max avg std > $DIR/stats_new.txt 
+cat $DIR/stats.txt  >> $DIR/stats_new.txt 
+cat $DIR/stats_new.txt | head -20  
 
 
 ### Attach the average "distance to the sea" to the polygon attribute table 
@@ -288,7 +294,6 @@ library(rgdal)
 library(maptools)
 library(rgeos)
 library(snow)
-
 
 DIR="/home/domisch/gis_intro"
 setwd(DIR)
