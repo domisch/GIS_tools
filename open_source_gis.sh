@@ -1,6 +1,6 @@
 
 
-### Examples of open source GIS tools using the command line - Sami Domisch, May17
+### Examples of open source GIS tools using the command line - Sami Domisch, May17. Updated in Nov24.
 
 
 # ###============================================================================
@@ -78,16 +78,20 @@ http://www.learnshell.org/
 
 
 ### Create working directory
-export DIR=$HOME/gis_intro # assign a variable
+export DIR=/shared/tmp/gis_intro # assign a variable
+echo $DIR 			# check 
 rm -rf $DIR 		# remove previous data
 mkdir -p $DIR 		# create the folder
 cd $DIR
 
-### Download global world borders shapefile
-wget -O world.zip   "http://thematicmapping.org/downloads/TM_WORLD_BORDERS-0.3.zip"
+### Download global world borders shapefile from here https://www.star.nesdis.noaa.gov/data/smcd1/vhp/GIS/TM_World_Borders/
+# wget -O TM_WORLD_BORDERS-0.3.zip   "http://thematicmapping.org/downloads/TM_WORLD_BORDERS-0.3.zip" # not working anymore
+
+### In case the download fails, see the file in the Github repository
+cp -r /mnt/shared/do_not_delete/GIS_tools/TM_WORLD_BORDERS-0.3.zip  $DIR
 
 ### Unzip the data
-unzip -j   world.zip  -d  $DIR/world
+unzip -j   TM_WORLD_BORDERS-0.3.zip  -d $DIR/world
 
 
 ###==================================================================================
@@ -99,6 +103,7 @@ unzip -j   world.zip  -d  $DIR/world
 
 ### Plot data
 openev $DIR/world/TM_WORLD_BORDERS-0.3.shp &
+
 ### Check metadata
 ogrinfo $DIR/world/TM_WORLD_BORDERS-0.3.shp  -al -so
 ogrinfo $DIR/world/TM_WORLD_BORDERS-0.3.shp  -al -so | grep "Feature Count" 
@@ -112,9 +117,9 @@ gdal_rasterize  $DIR/world/TM_WORLD_BORDERS-0.3.shp   -l TM_WORLD_BORDERS-0.3  $
 openev   $DIR/world/TM_WORLD_BORDERS-0.3.shp     $DIR/world/world.tif  &
 # e.g to 0.0083 degree, aka 1km --> check file size
 gdal_rasterize  $DIR/world/TM_WORLD_BORDERS-0.3.shp   -l TM_WORLD_BORDERS-0.3  $DIR/world/world.tif   -a_srs EPSG:4326   -a_nodata  -9999  -tr 0.008333333333333333  0.008333333333333333  -a UN 
-ll world
+ll -h world
 ### See the different data types for storing 
-### https://grass.osgeo.org/grass78/manuals/r.out.gdal.html
+### https://grass.osgeo.org/grass-stable/manuals/r.out.gdal.html
 
 # Ranges of GDAL data types
 #   GDAL data type	      	   minimum  		maximum
@@ -142,35 +147,30 @@ openev   $DIR/distance.tif  &
 ### Merge raster data
 
 ### Download and unzip a DEM from WorldClim (http://www.worldclim.org/tiles.php):
-wget -O  $DIR/alt_16_tif.zip  "http://biogeo.ucdavis.edu/data/climate/worldclim/1_4/tiles/cur/alt_16_tif.zip"
-unzip  -o $DIR/alt_16_tif.zip  -d  $DIR/dem
-gdalinfo $DIR/dem/alt_16.tif        # check data, pay attention to NoData values
-
-### Correct the NoData values
-gdal_translate  -of GTiff  -ot  Int32  -a_nodata -9999    $DIR/dem/alt_16.tif   $DIR/dem/alt_16_2.tif
-gdalinfo $DIR/dem/alt_16_2.tif 
-openev  $DIR/dem/alt_16_2.tif &
+wget -O  $DIR/segment_h00v00.tif  "https://public.igb-berlin.de/index.php/s/agciopgzXjWswF4/download?path=%2Fr.watershed%2Fsegment_tiles20d&files=segment_h00v00.tif"
+gdalinfo $DIR/segment_h00v00.tif       # check data, pay attention to NoData values
 
 
-wget -O  $DIR/alt_17_tif.zip  "http://biogeo.ucdavis.edu/data/climate/worldclim/1_4/tiles/cur/alt_17_tif.zip"
-unzip  -o $DIR/alt_17_tif.zip  -d  $DIR/dem
-gdalinfo $DIR/dem/alt_17.tif        # check data
+wget -O  $DIR/segment_h02v00.tif  "https://public.igb-berlin.de/index.php/s/agciopgzXjWswF4/download?path=%2Fr.watershed%2Fsegment_tiles20d&files=segment_h02v00.tif"
+gdalinfo $DIR/segment_h02v00.tif        # check data
 
 
 
 ### Merge raster data using gdalbuildvrt
-openev   $DIR/dem/alt_16.tif   $DIR/dem/alt_17.tif &
-gdalbuildvrt  $DIR/dem/tmp.vrt  $DIR/dem/alt_16.tif   $DIR/dem/alt_17.tif
-gdal_translate  -of GTiff  -ot  Int32  -a_nodata -9999    $DIR/dem/tmp.vrt   $DIR/dem/merged.tif  -co COMPRESS=LZW -co ZLEVEL=9
-openev  $DIR/dem/merged.tif &
-
-
+openev   $DIR/segment_h00v00.tif    $DIR/segment_h02v00.tif  &
+gdalbuildvrt  $DIR/tmp.vrt  $DIR/segment_h00v00.tif    $DIR/segment_h02v00.tif
+gdal_translate  -of GTiff  -ot  Int32  -a_nodata -9999    $DIR/tmp.vrt   $DIR/merged.tif  -co COMPRESS=LZW -co ZLEVEL=9
+openev  $DIR/merged.tif &
 
 
 
 
 ###==================================================================================
 
+### Define new working directory
+cp -r $DIR $HOME
+export DIR=$HOME/gis_intro # assign a variable
+cd $DIR
 
 ### GRASS
 ### - download 1km elevation data for central Europe
@@ -178,15 +178,36 @@ openev  $DIR/dem/merged.tif &
 ### - extract stream network and watersheds
 
 
+### Get elevation data
+wget -O $DIR/wc2.1_30s_elev.zip "https://geodata.ucdavis.edu/climate/worldclim/2_1/base/wc2.1_30s_elev.zip"
+unzip  $DIR/wc2.1_30s_elev.zip  # wc2.1_30s_elev.tif
+gdalinfo wc2.1_30s_elev.tif
+gdalinfo wc2.1_30s_elev.tif -mm
+
+# ### Correct the NoData values
+gdal_translate  -of GTiff  -ot  Int32  -a_nodata -9999    $DIR/wc2.1_30s_elev.tif  $DIR/wc2.1_30s_elev_NoData_fixed.tif
+gdalinfo $DIR/wc2.1_30s_elev_NoData_fixed.tif
+openev  $DIR/wc2.1_30s_elev_NoData_fixed.tif &
+
+
+# First crop the basin to smaller extent:
+pkcrop  -i $DIR/wc2.1_30s_elev_NoData_fixed.tif  -o $DIR/wc2.1_30s_elev_NoData_fixed_EU.tif  -align  -ulx 2  -uly 60  -lrx 20  -lry  35
+qgis $DIR/wc2.1_30s_elev_NoData_fixed_EU.tif
+
+
 
 
 ### Create the GRASS GIS data base and enter GRASS:
-grass78  -text -c -e  $DIR/dem/alt_16.tif  $DIR/grass_location
-grass78 -text $DIR/grass_location/PERMANENT  # enter GRASS
+grass --text -e  -c $DIR/wc2.1_30s_elev_NoData_fixed_EU.tif  $DIR/grass_location
+grass $DIR/grass_location/PERMANENT  # enter GRASS
 
 ### Read data into GRASS
-r.in.gdal input=$DIR/dem/alt_16.tif    output=elevation   --overwrite
+r.in.gdal input=$DIR/wc2.1_30s_elev_NoData_fixed_EU.tif   output=elevation   --overwrite
 r.info elevation # check data
+
+### Need to define the NoData again (?)
+r.null map=elevation setnull=-32768
+r.info elevation # check again
 
 ### Open GUI and visualize the layers
 g.gui wxpython
@@ -198,11 +219,11 @@ g.gui wxpython
 ### Extract drainage direction and stream network
 # r.watershed  --h  # see help regarding the options and flags
 # r.watershed  elevation=elevation_cond  drainage=drainage   stream=stream  accumulation=accumulation  threshold=100  --o
-r.watershed  elevation=elevation  drainage=drainage   stream=stream  accumulation=accumulation  threshold=10  --o
+r.watershed  elevation=elevation  drainage=drainage   stream=stream  accumulation=accumulation  threshold=100  --o 
 
 ### Get drainage basins (last downstream segment: -l flag)
 # g.extension  extension=r.stream.basins
-r.stream.basins  direction=drainage  stream_rast=stream  basins=basins   --o  # -l
+r.stream.basins  direction=drainage  stream_rast=stream  basins=basins   --o   -l
 
 ### Categorize the single basins:
 # r.clump -d input=basins  output=basins_cat  --o
@@ -218,6 +239,9 @@ r.univar -t  map=elevation  zones=basins  output=$DIR/basins_elevation.txt  sepa
 
 exit
 
+
+qgis $DIR/stream.tif  $DIR/basin.tif
+
 ###==================================================================================
 
 
@@ -231,24 +255,34 @@ exit
 
 ### pktools
 # http://pktools.nongnu.org/html/index.html
+
+# Crop raster layers
+pkcrop  -i $DIR/distance.tif   -o $DIR/distance_crop1.tif  -align  -ulx 2  -uly 60  -lrx 20  -lry  35
+pkcrop  -i $DIR/distance.tif  -o $DIR/distance_crop2.tif  -align  -ulx 15  -uly 40  -lrx 35  -lry  20
+
+# Merge two raster layers
+pkcomposite   -i $DIR/distance_crop1.tif   -i $DIR/distance_crop2.tif   -o $DIR/distance_merge.tif
+openev $DIR/distance_crop1.tif    $DIR/distance_crop2.tif   $DIR/distance_merge.tif   &
+
+
 ### Crop global distance layer to same extent as basins (central Europe)
+
+# First crop the basin to smaller extent:
 # pkcrop  -i $DIR/distance.tif   -o $DIR/distance_crop1.tif  -align  -ulx 2  -uly 60  -lrx 20  -lry  35
-pkinfo -i $DIR/basin.tif -bb -dx -dy
+pkinfo -i $DIR/distance_merge.tif -bb -dx -dy
 pkcrop -i $DIR/distance.tif  $(pkinfo -i $DIR/basin.tif  -bb)  -o $DIR/distance_mask.tif  -co COMPRESS=LZW -co ZLEVEL=9
 openev $DIR/distance_mask.tif &
 gdalinfo $DIR/distance_mask.tif 
 
 
-# Merge two raster layers
-pkcrop  -i $DIR/distance.tif   -o $DIR/distance_crop1.tif  -align  -ulx 2  -uly 60  -lrx 20  -lry  35
-pkcrop  -i $DIR/distance.tif  -o $DIR/distance_crop2.tif  -align  -ulx 15  -uly 40  -lrx 35  -lry  20
-pkcomposite   -i $DIR/distance_crop1.tif   -i $DIR/distance_crop2.tif   -o $DIR/distance_merge.tif
-openev $DIR/distance_crop1.tif    $DIR/distance_crop2.tif   $DIR/distance_merge.tif   &
 
 
 ### Create a polygon from the basin raster layer
+## First crop the basin to a smaller extent
+pkcrop  -i $DIR/basin.tif   -o $DIR/basin_crop.tif  -align  -ulx 2  -uly 60  -lrx 20  -lry  35
+
 # gdal_polygonize.py  -h
-gdal_polygonize.py -8  -f "ESRI Shapefile"  $DIR/basin.tif  $DIR/basin.shp   basin  basin_id
+gdal_polygonize.py -8  -f "ESRI Shapefile"  $DIR/basin_crop.tif  $DIR/basin.shp   basin  basin_id
 ogrinfo   $DIR/basin.shp   -al -so
 openev $DIR/basin.shp  &
 
@@ -288,8 +322,9 @@ R
 
 ### Load packages and set working directory
 # install.packages("raster")
-library(raster)
-library(sp)
+install.packages("rgeos")
+library(terra)
+library(sf)
 library(rgdal)
 library(maptools)
 library(rgeos)
@@ -299,19 +334,21 @@ DIR="/home/domisch/gis_intro"
 setwd(DIR)
 
 ### Read global shapefile and set projection
-world <- shapefile("world/TM_WORLD_BORDERS-0.3.shp")
+world <- vect("world/TM_WORLD_BORDERS-0.3.shp")
 world
+
 ### See also www.spatialreference.org
 # proj4string(world) <- "+proj=longlat +ellps=WGS84"
 ### Dissolve global shapefile
-world_dissolve <-  gUnaryUnion(world)
+world_dissolve <-  union(world)
 x11(20,10); plot(world_dissolve)
 
 ### Load the elevation data and basin-polygons
-dem <- raster("dem/alt_16.tif")
+dem <- rast("wc2.1_10m_elev.tif")
 dem
 
-basin <- shapefile("basin.shp")
+
+basin <- vect("basin.shp")
 basin
 
 ### Define projection for the basins
@@ -321,16 +358,16 @@ basin
 
 ### Subset global shapefile by country
 head(world)
-world_sub <- subset(world, NAME== "Austria")
+world_sub <- subset(world, world$NAME == "Austria")
 x11(); plot(world_sub)
 
 ### Which basins overlap with the selection?
-basin_subset <- raster::intersect(world_sub, basin)
+basin_subset <- terra::intersect(world_sub, basin)
 x11(); plot(basin_subset)
 head(basin_subset) # both shapefiles are merged
 
 ### Crop elevation raster data
-dem_crop <- crop(dem, extent(basin_subset))
+dem_crop <- crop(dem, ext(basin_subset))
 x11(20,10); plot(dem_crop); plot(basin_subset, add=T)
 
 ### Alternatives to cropping the shapefiles to a smaller extent
@@ -345,19 +382,19 @@ x11(20,10); plot(dem_crop); plot(basin_subset, add=T)
 ### Get the maximum elevation in each watershed
 
 ### Run extraction on (a subset of the) shapefile
-beginCluster(8)
-basin_subset_elevation <- extract(dem_crop, basin_subset, fun=max, sp=T) # only for a subset...
-endCluster()
+# beginCluster(8)
+basin_subset_elevation <- extract(dem_crop, basin_subset, fun=max) # only for a subset...
+# endCluster()
 
 ### Check data
 head(basin_subset_elevation)
 
 ### Export the shapefile
-shapefile(basin_subset_elevation, "basin_subset_elevation.shp", overwrite=TRUE)
+# shapefile(basin_subset_elevation, "basin_subset_elevation.shp", overwrite=TRUE)
 
 
 ### Run same analysis on raster layers
-basin_r <- raster("basin.tif")
+basin_r <- rast("basin.tif")
 basin_r_crop <- crop(basin_r, dem_crop)
 
 ### Plot
@@ -373,7 +410,7 @@ head(dem_max)
 dem_max <- as.data.frame(dem_max) 	 # convert matrix to dataframe 
 names(dem_max) <- c("is", "becomes") # change headers, see ?reclassify
 head(dem_max)
-basin_maxElev <- reclassify(basin_r_crop, dem_max)
+basin_maxElev <- classify(basin_r_crop, dem_max)
 
 x11(); plot(basin_maxElev)
 plot(basin_subset_elevation, add=T)
