@@ -78,10 +78,10 @@ http://www.learnshell.org/
 
 
 ### Create working directory
-export DIR=/shared/tmp/gis_intro # assign a variable
+export DIR=/mnt/shared/tmp/gis_intro # assign a variable
 echo $DIR 			# check 
 rm -rf $DIR 		# remove previous data
-mkdir -p $DIR 		# create the folder
+mkdir -p $DIR/		# create the folder
 cd $DIR
 
 ### Download global world borders shapefile from here https://www.star.nesdis.noaa.gov/data/smcd1/vhp/GIS/TM_World_Borders/
@@ -146,7 +146,7 @@ openev   $DIR/distance.tif  &
 
 ### Merge raster data
 
-### Download and unzip a DEM from WorldClim (http://www.worldclim.org/tiles.php):
+### Download and unzip a DEM from Hydrography90m (https://hydrography.org/hydrography90m/hydrography90m_layers/):
 wget -O  $DIR/segment_h00v00.tif  "https://public.igb-berlin.de/index.php/s/agciopgzXjWswF4/download?path=%2Fr.watershed%2Fsegment_tiles20d&files=segment_h00v00.tif"
 gdalinfo $DIR/segment_h00v00.tif       # check data, pay attention to NoData values
 
@@ -242,6 +242,14 @@ exit
 
 qgis $DIR/stream.tif  $DIR/basin.tif
 
+
+### AWK
+# Get the two columns for e.g. a lookup table and save to disk:    ID | avg
+head $DIR/basins_elevation.txt 
+awk  '{ print $1, $5 }' $DIR/basins_elevation.txt  > $DIR/lookup_tmp.txt
+head $DIR/lookup_tmp.txt
+
+
 ###==================================================================================
 
 
@@ -259,6 +267,8 @@ qgis $DIR/stream.tif  $DIR/basin.tif
 # Crop raster layers
 pkcrop  -i $DIR/distance.tif   -o $DIR/distance_crop1.tif  -align  -ulx 2  -uly 60  -lrx 20  -lry  35
 pkcrop  -i $DIR/distance.tif  -o $DIR/distance_crop2.tif  -align  -ulx 15  -uly 40  -lrx 35  -lry  20
+
+qgis  $DIR/distance_crop1.tif    $DIR/distance_crop2.tif 
 
 # Merge two raster layers
 pkcomposite   -i $DIR/distance_crop1.tif   -i $DIR/distance_crop2.tif   -o $DIR/distance_merge.tif
@@ -322,13 +332,13 @@ R
 
 ### Load packages and set working directory
 # install.packages("raster")
-install.packages("rgeos")
+# install.packages("rgeos")
 library(terra)
-library(sf)
-library(rgdal)
-library(maptools)
-library(rgeos)
-library(snow)
+# library(rgdal)
+# library(sf)
+# library(maptools)
+# library(rgeos)
+# library(snow)
 
 DIR="/home/domisch/gis_intro"
 setwd(DIR)
@@ -344,7 +354,7 @@ world_dissolve <-  union(world)
 x11(20,10); plot(world_dissolve)
 
 ### Load the elevation data and basin-polygons
-dem <- rast("wc2.1_10m_elev.tif")
+dem <- rast("wc2.1_30s_elev.tif")
 dem
 
 
@@ -359,6 +369,8 @@ basin
 ### Subset global shapefile by country
 head(world)
 world_sub <- subset(world, world$NAME == "Austria")
+# world_sub <- subset(world, c("Austria", "Germany", "Hungary") %in% world$NAME)
+
 x11(); plot(world_sub)
 
 ### Which basins overlap with the selection?
